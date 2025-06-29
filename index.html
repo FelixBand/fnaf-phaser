@@ -1,7 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My first mobile game</title>
+  <title>Fullscreen Phaser Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000; /* Match your game's background color */
+      height: 100%;
+      width: 100%;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
   <script src="phaser.min.js"></script>
   <script src="game.js"></script>
 </head>
