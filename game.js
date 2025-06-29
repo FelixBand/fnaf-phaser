@@ -30,6 +30,9 @@ function preload() {
     'assets/static/static.png',
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
+
+  this.load.audio('staticbuzz', 'assets/static.wav');
+  this.load.audio('mainTheme', 'assets/Main Menu Theme.wav');
 }
 
 function create() {
@@ -84,11 +87,22 @@ function warningFade() {
           targets: warningSprite,
           alpha: 0,
           duration: 2000,
-          ease: 'Linear'
+          ease: 'Linear',
+          onComplete: () => {
+            loadMainMenu(this);
+          }
         });
       });
     }
   });
+}
+
+function loadMainMenu(scene) {
+  staticSprite.alpha = 1;
+
+  scene.sound.play('staticbuzz');
+  scene.loopingSound = scene.sound.add('mainTheme', { loop: true });
+  scene.loopingSound.play();
 }
 
 function getRandom(min, max, decimals = 0) {
