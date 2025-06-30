@@ -20,6 +20,7 @@ const game = new Phaser.Game(config);
 let centerX = config.width / 2;
 let centerY = config.height / 2;
 
+let staticAlphaTimer = 0;
 let staticSprite;
 let warningSprite;
 
@@ -31,7 +32,7 @@ function preload() {
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
 
-  this.load.audio('staticbuzz', 'assets/static.wav');
+  this.load.audio('staticbuzz', 'assets/static2.wav');
   this.load.audio('mainTheme', 'assets/Main Menu Theme.wav');
 }
 
@@ -55,23 +56,32 @@ function create() {
   warningFade.call(this);
 }
 
-function update() {
+function update(time, delta) { // delta = time since last frame in ms
   // if (this.input.activePointer.isDown) {
   //   staticSprite.alpha = 0.5;
   // } else {
   //   staticSprite.alpha = 1;
   // }
 
-  // staticAlpha = getRandom(0, 3, 1);
-  // staticSprite.alpha = staticAlpha;
+  // 'time' is the current game time in ms, 'delta' is time since last frame in ms
+
+  // Only do this if the staticSprite is visible (Main menu is loaded)
+  if (staticSprite && staticSprite.alpha > 0) {
+    staticAlphaTimer += delta;
+
+    if (staticAlphaTimer >= 100) {  // 100 ms = 0.1 sec
+      const newAlpha = getRandom(0.5, 0.7, 2);  // 2 decimals for precision
+      staticSprite.alpha = newAlpha;
+
+      staticAlphaTimer = 0;  // reset timer
+    }
+  }
 }
 
-// async function warningFade() {
-//   warningSprite.alpha = 1;
-//   await sleep(1000);  // wait 1 second
-//   console.log('Action after 1 second');
-//   warningSprite.alpha = 0;
-// }
+async function menuItemsAction() {
+  await sleep(1000);  // wait 1 second
+  console.log('Action after 1 second');
+}
 
 function warningFade() {
   // Fade in
@@ -89,6 +99,7 @@ function warningFade() {
           duration: 2000,
           ease: 'Linear',
           onComplete: () => {
+            warningSprite.alpha = 0;
             loadMainMenu(this);
           }
         });
@@ -103,6 +114,8 @@ function loadMainMenu(scene) {
   scene.sound.play('staticbuzz');
   scene.loopingSound = scene.sound.add('mainTheme', { loop: true });
   scene.loopingSound.play();
+
+  menuItemsAction()
 }
 
 function getRandom(min, max, decimals = 0) {
