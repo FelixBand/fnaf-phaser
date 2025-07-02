@@ -27,12 +27,9 @@ let debugMode = true;
 
 let enableContentWarning = true;
 let mainMenuActive = true;
-let staticAlphaTimer = 0;
-let staticSprite;
-let freddyMenuSprite;
-let warningSprite;
-
 let night;
+let office;
+let inGame = false; // flag to check if we are in the game or not
 
 function preload() { // preload assets presumably to prevent lag when adding them
   // textures
@@ -48,11 +45,17 @@ function preload() { // preload assets presumably to prevent lag when adding the
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
 
+  this.load.spritesheet('transitionglitching', 
+    'assets/textures/glitch/transitionGlitching.png',
+    { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
+  );
+
   this.load.spritesheet('freddyMenu', 
     'assets/textures/menuFreddyBrightened.png',
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
 
+  this.load.image('scanline', 'assets/textures/glitch/scanline.png');
   this.load.image('pointerArrows', 'assets/textures/arrows.png');
 
   this.load.image('fnaf', 'assets/textures/fnaf.png');
@@ -66,10 +69,20 @@ function preload() { // preload assets presumably to prevent lag when adding the
 
   this.load.image('newspaper', 'assets/textures/newspaper.png');
 
+  // now we load night1 through night7 .png textures with a for loop
+  for (let i = 1; i <= 7; i++) {
+    this.load.image('night' + i, 'assets/textures/loadscreen/night' + i + '.png');
+  }
+
+  this.load.image('clock', 'assets/textures/loadscreen/clock.png');
+
   // audio
   this.load.audio('blip', 'assets/audio/blip3.wav');
   this.load.audio('staticbuzz', 'assets/audio/static2.wav');
   this.load.audio('mainTheme', 'assets/audio/Main Menu Theme.wav');
+
+  // shaders
+  //this.load.glsl('warpShader', 'assets/shaders/warp.frag');
 }
 
 function create() {
@@ -103,13 +116,34 @@ function create() {
   });
 
   this.anims.create({
+    key: 'transitionglitch1',
+    frames: this.anims.generateFrameNumbers('transitionglitching', { start: 0, end: 5 }),
+    frameRate: 24,
+    repeat: 0
+  });
+
+  this.anims.create({
+    key: 'transitionglitch2',
+    frames: [
+      { key: 'transitionglitching', frame: 6 },
+      { key: 'transitionglitching', frame: 1 },
+      { key: 'transitionglitching', frame: 3 },
+      { key: 'transitionglitching', frame: 2 },
+      { key: 'transitionglitching', frame: 4 },
+      { key: 'transitionglitching', frame: 7 }
+    ],
+    frameRate: 24,
+    repeat: 0
+  });
+
+  this.anims.create({
     key: 'twitch1',
     frames: [
       { key: 'freddyMenu', frame: 0 },
       { key: 'freddyMenu', frame: 1 },
       { key: 'freddyMenu', frame: 0 }
     ],
-    frameRate: 24,
+    frameRate: 18,
     repeat: 0
   });
   this.anims.create({
@@ -119,7 +153,7 @@ function create() {
       { key: 'freddyMenu', frame: 2 },
       { key: 'freddyMenu', frame: 0 }
     ],
-    frameRate: 24,
+    frameRate: 18,
     repeat: 0
   });
   this.anims.create({
@@ -129,7 +163,7 @@ function create() {
       { key: 'freddyMenu', frame: 3 },
       { key: 'freddyMenu', frame: 0 }
     ],
-    frameRate: 24,
+    frameRate: 18,
     repeat: 0
   });
 
@@ -144,11 +178,14 @@ function update(time, delta) {
   // time = time in ms that project has been alive for
   // delta = time since last frame in ms
 
-  // if (this.input.activePointer.isDown) {
-  //   staticSprite.alpha = 0.5;
-  // } else {
-  //   staticSprite.alpha = 1;
-  // }
+  scene = this; // make scene available in functions
+  scanline.y = (time / 30 % (720 + scanline.height) - scanline.height); // move scanline down by 0.5 pixels every frame, wrapping around at the bottom
+
+  //console.log(Math.sin(time / 1000) * 1000);
+  if (inGame) {
+    //console.log("In game, moving office background");
+    office.x = Math.sin(time / 1000) * 1000; // make the office background move slightly left and right
+  }
 }
 
 async function menuItemsAction() { // just testing
@@ -201,6 +238,10 @@ function loadMainMenu(scene) { // load menu after content warning
   glitching = scene.add.sprite(centerX, centerY, 'glitching');
   glitching.anims.play('menuglitch', true);
   glitching.alpha = 0;
+
+  scanline = scene.add.image(centerX, getRandom(0,720,0), 'scanline');
+  scanline.setOrigin(0.5, 0);
+  scanline.alpha = 0.35;
 
   version = scene.add.image(20, config.height - 30, 'version');
   version.setScale(0.5);
@@ -265,7 +306,7 @@ function loadMainMenu(scene) { // load menu after content warning
       twitchTimer.remove();
       return;
     }
-    if (getRandom(1,8,0) == 1) {
+    if (getRandom(1,10,0) == 1) {
       freddyMenuSprite.anims.play('twitch' + getRandom(1,3,0), true);
     }
   },});
@@ -277,10 +318,10 @@ function loadMainMenu(scene) { // load menu after content warning
       return;
     }
     freddyMenuSprite.alpha = getRandom(0,2,1); // random number between 0 and 2.0 making visibilty more likely
-    if (getRandom(1,3,1) == 1) {
-      glitching.alpha = getRandom(0.4,0.5,1);
+    if (getRandom(1,3,0) == 1) {
+      glitching.alpha = getRandom(0.3,0.5,1);
     }
-    if (getRandom(10,15,1) == 10) {
+    if (getRandom(1,3,0) == 1) {
       glitching.alpha = 0;
     }
   },});
@@ -309,7 +350,8 @@ function newgame(scene) {
           duration: 2000,
           ease: 'Linear',
           onComplete: () => {
-            newspaper.alpha = 0;
+            newspaper.destroy();
+            loadGame(scene); // start the game after the newspaper fades out
           }
         });
       });
@@ -318,7 +360,6 @@ function newgame(scene) {
 }
 
 function destroyMenu(scene) {
-  console.log(menuItems + menuItemNames);
   menuItems.forEach(sprite => {
     if (sprite && sprite.destroy) {
       sprite.destroy();
@@ -329,6 +370,8 @@ function destroyMenu(scene) {
   // Also destroy other sprites and sounds you want to remove, e.g.:
   freddyMenuSprite.destroy();
   staticSprite.destroy();
+  glitching.destroy();
+  scanline.destroy();
   version.destroy();
   copyright.destroy();
   fnaf.destroy();
@@ -342,7 +385,59 @@ function destroyMenu(scene) {
   freddyAlphaTimer.remove();
 }
 
-function saveNight(value) {
+function loadGame(scene) {
+  console.log("Starting game at night:", night);
+
+  scene.loopingSound.stop(); // stop the main menu theme
+
+  blipSound.play();
+
+  nightsplash = scene.add.image(centerX, centerY, 'night' + night);
+
+  transglitching = scene.add.sprite(centerX, centerY, 'transitionglitching');
+  transglitching.anims.play('transitionglitch' + getRandom(1,2,0), true);
+
+  transglitching.on('animationcomplete', () => {
+    transglitching.setVisible(false);
+  });
+
+  // fade out the splash screen after 3 seconds
+  scene.time.delayedCall(3000, () => {
+    scene.tweens.add({
+      targets: nightsplash,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Linear',
+      onComplete: () => {
+        nightsplash.destroy();
+        clock = scene.add.image(1235, 680, 'clock');
+        loadGameAssets(scene); // Load game assets after splash screen
+      }
+    });
+  });
+}
+
+function loadGameAssets(scene) {
+  scene.load.image('office', 'assets/textures/office/office.png');
+  
+  scene.load.once('complete', () => {
+    startGameLogic(scene);
+  });
+
+  scene.load.start(); // starts loading the queued assets
+}
+
+function startGameLogic(scene) {
+  clock.destroy();
+  
+  // Add the office background image
+  office = scene.add.image(0, 0, 'office').setOrigin(0);
+
+  inGame = true; // set inGame flag to true
+}
+
+
+function saveNight(value) { // helper function to save the current night to localStorage
   night = value;
   localStorage.setItem('night', night);
 }
