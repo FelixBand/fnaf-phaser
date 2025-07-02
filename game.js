@@ -43,6 +43,11 @@ function preload() { // preload assets presumably to prevent lag when adding the
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
 
+  this.load.spritesheet('glitching', 
+    'assets/textures/glitch/menuGlitching.png',
+    { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
+  );
+
   this.load.spritesheet('freddyMenu', 
     'assets/textures/menuFreddyBrightened.png',
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
@@ -84,14 +89,21 @@ function create() {
 
   // Create an animation using the loaded spritesheet
   this.anims.create({
-    key: 'idle', // The name (key) of the animation we’ll reference later
+    key: 'buzz', // The name (key) of the animation we’ll reference later
     frames: this.anims.generateFrameNumbers('static', { start: 0, end: 7 }), // use frame 0-7
     frameRate: 60,
     repeat: -1 // -1 = loop
   });
 
   this.anims.create({
-    key: 'idle1', // The name (key) of the animation we’ll reference later
+    key: 'menuglitch',
+    frames: this.anims.generateFrameNumbers('glitching', { start: 0, end: 7 }), // use frame 0-7
+    frameRate: 4,
+    repeat: -1 // -1 = loop
+  });
+
+  this.anims.create({
+    key: 'twitch1',
     frames: [
       { key: 'freddyMenu', frame: 0 },
       { key: 'freddyMenu', frame: 1 },
@@ -101,7 +113,7 @@ function create() {
     repeat: 0
   });
   this.anims.create({
-    key: 'idle2', // The name (key) of the animation we’ll reference later
+    key: 'twitch2',
     frames: [
       { key: 'freddyMenu', frame: 0 },
       { key: 'freddyMenu', frame: 2 },
@@ -111,7 +123,7 @@ function create() {
     repeat: 0
   });
   this.anims.create({
-    key: 'idle3', // The name (key) of the animation we’ll reference later
+    key: 'twitch3',
     frames: [
       { key: 'freddyMenu', frame: 0 },
       { key: 'freddyMenu', frame: 3 },
@@ -161,7 +173,7 @@ function warningFade() {
             duration: 2000,
             ease: 'Linear',
             onComplete: () => {
-              //warningSprite.destroy();
+              warningSprite.destroy();
               loadMainMenu(this); // Load actual main menu when fade completed
             }
           });
@@ -179,11 +191,16 @@ function loadMainMenu(scene) { // load menu after content warning
   scene.loopingSound = scene.sound.add('mainTheme', { loop: true });
   scene.loopingSound.play();
 
+  blipSound = scene.sound.add('blip');
+
   freddyMenuSprite = scene.add.sprite(centerX, centerY, 'freddyMenu');
-  freddyMenuSprite.anims.play('idle2', true);
 
   staticSprite = scene.add.sprite(centerX, centerY, 'static');
-  staticSprite.anims.play('idle', true);
+  staticSprite.anims.play('buzz', true);
+
+  glitching = scene.add.sprite(centerX, centerY, 'glitching');
+  glitching.anims.play('menuglitch', true);
+  glitching.alpha = 0;
 
   version = scene.add.image(20, config.height - 30, 'version');
   version.setScale(0.5);
@@ -220,7 +237,6 @@ function loadMainMenu(scene) { // load menu after content warning
     });
     sprite.on('pointerover', () => {
       if (!mainMenuActive) return; // do nothing if main menu is not active
-      blipSound = scene.sound.add('blip');
       // It needs to play a sound when hovering over menu items, unless hovering over an item that is already selected
       if (pointerArrows.y != sprite.y + 17) {
         blipSound.play();
@@ -250,7 +266,7 @@ function loadMainMenu(scene) { // load menu after content warning
       return;
     }
     if (getRandom(1,8,0) == 1) {
-      freddyMenuSprite.anims.play('idle' + getRandom(1,3,0), true);
+      freddyMenuSprite.anims.play('twitch' + getRandom(1,3,0), true);
     }
   },});
 
@@ -261,6 +277,12 @@ function loadMainMenu(scene) { // load menu after content warning
       return;
     }
     freddyMenuSprite.alpha = getRandom(0,2,1); // random number between 0 and 2.0 making visibilty more likely
+    if (getRandom(1,3,1) == 1) {
+      glitching.alpha = getRandom(0.4,0.5,1);
+    }
+    if (getRandom(10,15,1) == 10) {
+      glitching.alpha = 0;
+    }
   },});
 
   menuItemsAction();
@@ -315,9 +337,9 @@ function destroyMenu(scene) {
   scene.sound.stopByKey('staticbuzz');
 
   // Remove timers if needed
-  if (staticFlickerTimer) staticFlickerTimer.remove();
-  if (twitchTimer) twitchTimer.remove();
-  if (freddyAlphaTimer) freddyAlphaTimer.remove();
+  staticFlickerTimer.remove();
+  twitchTimer.remove();
+  freddyAlphaTimer.remove();
 }
 
 function saveNight(value) {
