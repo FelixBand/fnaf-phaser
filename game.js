@@ -4,7 +4,9 @@ const config = {
   height: 720,
   pixelArt: true, // Prevent anti-aliasing causing blurry text
   backgroundColor: '#000000',
-  autoFocus: true,
+  fps: {
+    target: 0, // 0 means no limit, Phaser will run at monitor's refresh rate
+  },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -43,6 +45,12 @@ function preload() { // preload assets presumably to prevent lag when adding the
     'assets/textures/menuFreddyBrightened.png',
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
+
+  this.load.image('fnaf', 'assets/textures/fnaf.png');
+  this.load.image('newgame', 'assets/textures/new game.png');
+  this.load.image('continue', 'assets/textures/continue.png');
+  this.load.image('night6', 'assets/textures/6th night.png');
+  this.load.image('customnight', 'assets/textures/custom night.png');
 
   // audio
   this.load.audio('staticbuzz', 'assets/audio/static2.wav');
@@ -141,6 +149,7 @@ function warningFade() {
       }
     });
   } else {
+    warningSprite.alpha = 0;
     loadMainMenu(this);
   }
 }
@@ -156,9 +165,15 @@ function loadMainMenu(scene) { // load menu after content warning
   staticSprite = scene.add.sprite(centerX, centerY, 'static');
   staticSprite.anims.play('idle', true);
 
-  staticSprite.alpha = getRandom(0.5, 0.7, 2);
-
+  menuItems = ["newgame", "continue", "night6", "customnight"];
+  menuItemsPos = [250, 250];
+  for (let i = 0; i < menuItems.length; i++) {
+    const item = menuItems[i];
+    const sprite = scene.add.sprite(menuItemsPos[0], menuItemsPos[1] + (i * 100), item);
+  }
+  
   // make animated static flicker by randomizing its alpha every 100ms
+  staticSprite.alpha = getRandom(0.5, 0.7, 2);
   staticFlickerTimer = scene.time.addEvent({ delay: 100, loop: true, callback: () => {
     if (!mainMenuActive) {
       staticFlickerTimer.remove();
