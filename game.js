@@ -59,6 +59,8 @@ function preload() { // preload assets presumably to prevent lag when adding the
   this.load.image('version', 'assets/textures/version.png');
   this.load.image('copyright', 'assets/textures/copyright.png');
 
+  this.load.image('newspaper', 'assets/textures/newspaper.png');
+
   // audio
   this.load.audio('blip', 'assets/audio/blip3.wav');
   this.load.audio('staticbuzz', 'assets/audio/static2.wav');
@@ -159,7 +161,7 @@ function warningFade() {
             duration: 2000,
             ease: 'Linear',
             onComplete: () => {
-              warningSprite.alpha = 0;
+              //warningSprite.destroy();
               loadMainMenu(this); // Load actual main menu when fade completed
             }
           });
@@ -190,35 +192,34 @@ function loadMainMenu(scene) { // load menu after content warning
   copyright = scene.add.image(config.width - 240, config.height - 30, 'copyright');
   copyright.setOrigin(0, 0);
 
-  menuItems = ["newgame", "continue", "night6", "customnight"];
+  menuItemNames = ["newgame", "continue", "night6", "customnight"];
+  menuItems = [];
   menuItemsPos = [175, 370];
 
   fnaf = scene.add.image(menuItemsPos[0], menuItemsPos[1] - 280, 'fnaf');
   fnaf.setOrigin(0, 0);
 
-  for (let i = 0; i < menuItems.length; i++) {
-    const item = menuItems[i];
-    const sprite = scene.add.sprite(menuItemsPos[0], menuItemsPos[1] + (i * 75), item);
+  for (let i = 0; i < menuItemNames.length; i++) {
+    const itemName = menuItemNames[i];
+    const sprite = scene.add.sprite(menuItemsPos[0], menuItemsPos[1] + (i * 75), itemName);
     sprite.setOrigin(0, 0);
     sprite.setInteractive();
     sprite.on('pointerdown', () => {
-      if (item === "newgame") {
-        console.log("New Game clicked");
-        mainMenuActive = false; // deactivate main menu
-        scene.sound.stopByKey('staticbuzz');
-        night = 1; // reset night to 1
-      } else if (item === "continue") {
+      if (itemName === "newgame") {
+        newgame(scene);
+      } else if (itemName === "continue") {
         console.log("Continue clicked");
         // Add logic to continue the game
-      } else if (item === "night6") {
+      } else if (itemName === "night6") {
         console.log("6th Night clicked");
         // Add logic for 6th night
-      } else if (item === "customnight") {
+      } else if (itemName === "customnight") {
         console.log("Custom Night clicked");
         // Add logic for custom night
       }
     });
     sprite.on('pointerover', () => {
+      if (!mainMenuActive) return; // do nothing if main menu is not active
       blipSound = scene.sound.add('blip');
       // It needs to play a sound when hovering over menu items, unless hovering over an item that is already selected
       if (pointerArrows.y != sprite.y + 17) {
@@ -226,6 +227,8 @@ function loadMainMenu(scene) { // load menu after content warning
       }
       pointerArrows.y = sprite.y + 17;
     });
+
+    menuItems.push(sprite);
   }
 
   pointerArrows = scene.add.image(menuItemsPos[0] - 40, 1000, 'pointerArrows');
@@ -261,6 +264,60 @@ function loadMainMenu(scene) { // load menu after content warning
   },});
 
   menuItemsAction();
+}
+
+function newgame(scene) {
+  console.log("New Game clicked");
+  mainMenuActive = false; // deactivate main menu
+  scene.sound.stopByKey('staticbuzz');
+  night = 1; // reset night to 1
+  newspaper = scene.add.image(centerX, centerY, 'newspaper');
+  newspaper.alpha = 0;
+  scene.tweens.add({
+    targets: newspaper,
+    alpha: 1,
+    duration: 2000,
+    ease: 'Linear',
+    onComplete: () => {
+      destroyMenu(scene);
+      scene.time.delayedCall(6000, () => {
+        scene.tweens.add({
+          targets: newspaper,
+          alpha: 0,
+          duration: 2000,
+          ease: 'Linear',
+          onComplete: () => {
+            newspaper.alpha = 0;
+          }
+        });
+      });
+    }
+  });
+}
+
+function destroyMenu(scene) {
+  console.log(menuItems + menuItemNames);
+  menuItems.forEach(sprite => {
+    if (sprite && sprite.destroy) {
+      sprite.destroy();
+    }
+  });
+  menuItems = [];
+
+  // Also destroy other sprites and sounds you want to remove, e.g.:
+  freddyMenuSprite.destroy();
+  staticSprite.destroy();
+  version.destroy();
+  copyright.destroy();
+  fnaf.destroy();
+  pointerArrows.destroy();
+
+  scene.sound.stopByKey('staticbuzz');
+
+  // Remove timers if needed
+  if (staticFlickerTimer) staticFlickerTimer.remove();
+  if (twitchTimer) twitchTimer.remove();
+  if (freddyAlphaTimer) freddyAlphaTimer.remove();
 }
 
 function saveNight(value) {
