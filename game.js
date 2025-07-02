@@ -4,6 +4,7 @@ const config = {
   height: 720,
   pixelArt: true, // Prevent anti-aliasing causing blurry text
   backgroundColor: '#000000',
+  autoFocus: true,
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -20,6 +21,9 @@ const game = new Phaser.Game(config);
 let centerX = config.width / 2;
 let centerY = config.height / 2;
 
+let debugMode = true;
+
+let enableContentWarning = true;
 let mainMenuActive = true;
 let staticAlphaTimer = 0;
 let staticSprite;
@@ -46,6 +50,10 @@ function preload() { // preload assets presumably to prevent lag when adding the
 }
 
 function create() {
+  if (debugMode == true) {
+    enableContentWarning = false;
+  }
+
   // Create an animation using the loaded spritesheet
   this.anims.create({
     key: 'idle', // The name (key) of the animation we’ll reference later
@@ -92,47 +100,15 @@ function create() {
   warningFade.call(this); // fade in & out the initial content warning
 }
 
-function update(time, delta) { // delta = time since last frame in ms
+function update(time, delta) {
+  // time = time in ms that project has been alive for
+  // delta = time since last frame in ms
+
   // if (this.input.activePointer.isDown) {
   //   staticSprite.alpha = 0.5;
   // } else {
   //   staticSprite.alpha = 1;
   // }
-}
-
-function staticFlicker(scene) {
-  staticSprite.alpha = getRandom(0.5, 0.7, 2);
-
-  flickerTimer = scene.time.addEvent({ delay: 100, loop: true, callback: () => {
-    if (!mainMenuActive) {
-      flickerTimer.remove();
-      return;
-    }
-    staticSprite.alpha = getRandom(0.5, 0.7, 2);
-  },
-  });
-}
-
-function freddyTwitch(scene) {
-  twitchTimer = scene.time.addEvent({ delay: 100, loop: true, callback: () => {
-    if (!mainMenuActive) {
-      twitchTimer.remove();
-      return;
-    }
-    if (getRandom(1,8,0) == 1) {
-      freddyMenuSprite.anims.play('idle' + getRandom(1,3,0), true);
-    }
-},});
-}
-
-function freddyAlpha(scene) {
-  freddyAlphaTimer = scene.time.addEvent({ delay: 250, loop: true, callback: () => {
-    if (!mainMenuActive) {
-      freddyAlphaTimer.remove();
-      return;
-    }
-    freddyMenuSprite.alpha = getRandom(0,2,1); // random number between 0 and 2.0 making visibilty more likely
-},});
 }
 
 async function menuItemsAction() { // just testing
@@ -141,28 +117,32 @@ async function menuItemsAction() { // just testing
 }
 
 function warningFade() {
-  // Fade in
-  this.tweens.add({
-    targets: warningSprite,
-    alpha: 1,
-    duration: 2000,
-    ease: 'Linear',
-    onComplete: () => {
-      // Wait 2 seconds, then fade out
-      this.time.delayedCall(2000, () => {
-        this.tweens.add({
-          targets: warningSprite,
-          alpha: 0,
-          duration: 2000,
-          ease: 'Linear',
-          onComplete: () => {
-            warningSprite.alpha = 0;
-            loadMainMenu(this); // Load actual main menu when fade completed
-          }
+  if (enableContentWarning) {
+    // Fade in
+    this.tweens.add({
+      targets: warningSprite,
+      alpha: 1,
+      duration: 2000,
+      ease: 'Linear',
+      onComplete: () => {
+        // Wait 2 seconds, then fade out
+        this.time.delayedCall(2000, () => {
+          this.tweens.add({
+            targets: warningSprite,
+            alpha: 0,
+            duration: 2000,
+            ease: 'Linear',
+            onComplete: () => {
+              warningSprite.alpha = 0;
+              loadMainMenu(this); // Load actual main menu when fade completed
+            }
+          });
         });
-      });
-    }
-  });
+      }
+    });
+  } else {
+    loadMainMenu(this);
+  }
 }
 
 function loadMainMenu(scene) { // load menu after content warning
@@ -176,9 +156,37 @@ function loadMainMenu(scene) { // load menu after content warning
   staticSprite = scene.add.sprite(centerX, centerY, 'static');
   staticSprite.anims.play('idle', true);
 
-  staticFlicker(scene);
-  freddyTwitch(scene);
-  freddyAlpha(scene);
+  staticSprite.alpha = getRandom(0.5, 0.7, 2);
+
+  // make animated static flicker by randomizing its alpha every 100ms
+  staticFlickerTimer = scene.time.addEvent({ delay: 100, loop: true, callback: () => {
+    if (!mainMenuActive) {
+      staticFlickerTimer.remove();
+      return;
+    }
+    staticSprite.alpha = getRandom(0.5, 0.8, 2);
+  },});
+
+  // make Freddy's sprite animate randomly
+  twitchTimer = scene.time.addEvent({ delay: 100, loop: true, callback: () => {
+    if (!mainMenuActive) {
+      twitchTimer.remove();
+      return;
+    }
+    if (getRandom(1,8,0) == 1) {
+      freddyMenuSprite.anims.play('idle' + getRandom(1,3,0), true);
+    }
+  },});
+
+  // make Freddy's sprite flicker randomly
+  freddyAlphaTimer = scene.time.addEvent({ delay: 250, loop: true, callback: () => {
+    if (!mainMenuActive) {
+      freddyAlphaTimer.remove();
+      return;
+    }
+    freddyMenuSprite.alpha = getRandom(0,2,1); // random number between 0 and 2.0 making visibilty more likely
+  },});
+
   menuItemsAction();
 }
 
