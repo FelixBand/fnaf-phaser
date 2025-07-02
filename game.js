@@ -20,11 +20,14 @@ const game = new Phaser.Game(config);
 let centerX = config.width / 2;
 let centerY = config.height / 2;
 
+let mainMenuActive = true;
 let staticAlphaTimer = 0;
 let staticSprite;
+let freddyMenuSprite;
 let warningSprite;
 
-function preload() {
+function preload() { // preload assets presumably to prevent lag when adding them
+  // textures
   this.load.image('warning', 'assets/warning.png');
 
   this.load.spritesheet('static', 
@@ -32,6 +35,12 @@ function preload() {
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
 
+  this.load.spritesheet('freddyMenu', 
+    'assets/menuFreddyBrighter.png',
+    { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
+  );
+
+  // audio
   this.load.audio('staticbuzz', 'assets/static2.wav');
   this.load.audio('mainTheme', 'assets/Main Menu Theme.wav');
 }
@@ -41,19 +50,46 @@ function create() {
   this.anims.create({
     key: 'idle', // The name (key) of the animation we’ll reference later
     frames: this.anims.generateFrameNumbers('static', { start: 0, end: 7 }), // use frame 0-7
-    frameRate: 45,
+    frameRate: 60,
     repeat: -1 // -1 = loop
+  });
+
+  this.anims.create({
+    key: 'idle1', // The name (key) of the animation we’ll reference later
+    frames: [
+      { key: 'freddyMenu', frame: 0 },
+      { key: 'freddyMenu', frame: 1 },
+      { key: 'freddyMenu', frame: 0 }
+    ],
+    frameRate: 24,
+    repeat: 0
+  });
+  this.anims.create({
+    key: 'idle2', // The name (key) of the animation we’ll reference later
+    frames: [
+      { key: 'freddyMenu', frame: 0 },
+      { key: 'freddyMenu', frame: 2 },
+      { key: 'freddyMenu', frame: 0 }
+    ],
+    frameRate: 24,
+    repeat: 0
+  });
+  this.anims.create({
+    key: 'idle3', // The name (key) of the animation we’ll reference later
+    frames: [
+      { key: 'freddyMenu', frame: 0 },
+      { key: 'freddyMenu', frame: 3 },
+      { key: 'freddyMenu', frame: 0 }
+    ],
+    frameRate: 24,
+    repeat: 0
   });
 
   warningSprite = this.add.image(centerX, centerY, 'warning');
   warningSprite.setScale(0.5);
   warningSprite.alpha = 0;
 
-  staticSprite = this.add.sprite(centerX, centerY, 'static');
-  staticSprite.anims.play('idle', true);
-  staticSprite.alpha = 0;
-
-  warningFade.call(this);
+  warningFade.call(this); // fade in & out the initial content warning
 }
 
 function update(time, delta) { // delta = time since last frame in ms
@@ -62,23 +98,44 @@ function update(time, delta) { // delta = time since last frame in ms
   // } else {
   //   staticSprite.alpha = 1;
   // }
-
-  // 'time' is the current game time in ms, 'delta' is time since last frame in ms
-
-  // Only do this if the staticSprite is visible (Main menu is loaded)
-  if (staticSprite && staticSprite.alpha > 0) {
-    staticAlphaTimer += delta;
-
-    if (staticAlphaTimer >= 100) {  // 100 ms = 0.1 sec
-      const newAlpha = getRandom(0.5, 0.7, 2);  // 2 decimals for precision
-      staticSprite.alpha = newAlpha;
-
-      staticAlphaTimer = 0;  // reset timer
-    }
-  }
 }
 
-async function menuItemsAction() {
+function staticFlicker(scene) {
+  staticSprite.alpha = getRandom(0.5, 0.7, 2);
+
+  flickerTimer = scene.time.addEvent({ delay: 100, loop: true, callback: () => {
+    if (!mainMenuActive) {
+      flickerTimer.remove();
+      return;
+    }
+    staticSprite.alpha = getRandom(0.5, 0.7, 2);
+  },
+  });
+}
+
+function freddyTwitch(scene) {
+  twitchTimer = scene.time.addEvent({ delay: 100, loop: true, callback: () => {
+    if (!mainMenuActive) {
+      twitchTimer.remove();
+      return;
+    }
+    if (getRandom(1,8,0) == 1) {
+      freddyMenuSprite.anims.play('idle' + getRandom(1,3,0), true);
+    }
+},});
+}
+
+function freddyAlpha(scene) {
+  freddyAlphaTimer = scene.time.addEvent({ delay: 250, loop: true, callback: () => {
+    if (!mainMenuActive) {
+      freddyAlphaTimer.remove();
+      return;
+    }
+    freddyMenuSprite.alpha = getRandom(0,2,1); // random number between 0 and 2.0 making visibilty more likely
+},});
+}
+
+async function menuItemsAction() { // just testing
   await sleep(1000);  // wait 1 second
   console.log('Action after 1 second');
 }
@@ -100,7 +157,7 @@ function warningFade() {
           ease: 'Linear',
           onComplete: () => {
             warningSprite.alpha = 0;
-            loadMainMenu(this);
+            loadMainMenu(this); // Load actual main menu when fade completed
           }
         });
       });
@@ -108,14 +165,21 @@ function warningFade() {
   });
 }
 
-function loadMainMenu(scene) {
-  staticSprite.alpha = 1;
-
+function loadMainMenu(scene) { // load menu after content warning
   scene.sound.play('staticbuzz');
   scene.loopingSound = scene.sound.add('mainTheme', { loop: true });
   scene.loopingSound.play();
 
-  menuItemsAction()
+  freddyMenuSprite = scene.add.sprite(centerX, centerY, 'freddyMenu');
+  freddyMenuSprite.anims.play('idle2', true);
+
+  staticSprite = scene.add.sprite(centerX, centerY, 'static');
+  staticSprite.anims.play('idle', true);
+
+  staticFlicker(scene);
+  freddyTwitch(scene);
+  freddyAlpha(scene);
+  menuItemsAction();
 }
 
 function getRandom(min, max, decimals = 0) {
