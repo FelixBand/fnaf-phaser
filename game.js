@@ -32,6 +32,8 @@ let staticSprite;
 let freddyMenuSprite;
 let warningSprite;
 
+let night;
+
 function preload() { // preload assets presumably to prevent lag when adding them
   // textures
   this.load.image('warning', 'assets/textures/warning.png');
@@ -46,13 +48,19 @@ function preload() { // preload assets presumably to prevent lag when adding the
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
 
+  this.load.image('pointerArrows', 'assets/textures/arrows.png');
+
   this.load.image('fnaf', 'assets/textures/fnaf.png');
   this.load.image('newgame', 'assets/textures/new game.png');
   this.load.image('continue', 'assets/textures/continue.png');
   this.load.image('night6', 'assets/textures/6th night.png');
   this.load.image('customnight', 'assets/textures/custom night.png');
 
+  this.load.image('version', 'assets/textures/version.png');
+  this.load.image('copyright', 'assets/textures/copyright.png');
+
   // audio
+  this.load.audio('blip', 'assets/audio/blip3.wav');
   this.load.audio('staticbuzz', 'assets/audio/static2.wav');
   this.load.audio('mainTheme', 'assets/audio/Main Menu Theme.wav');
 }
@@ -61,6 +69,16 @@ function create() {
   if (debugMode == true) {
     enableContentWarning = false;
   }
+
+  const savedNight = localStorage.getItem('night');
+  if (savedNight !== null) {
+    night = Number(savedNight); // convert back to number if needed
+  } else {
+    night = 1; // or whatever your default starting value is
+    saveNight(night); // save the default night to localStorage
+  }
+
+  console.log("Night loaded from localStorage:", night);
 
   // Create an animation using the loaded spritesheet
   this.anims.create({
@@ -165,12 +183,52 @@ function loadMainMenu(scene) { // load menu after content warning
   staticSprite = scene.add.sprite(centerX, centerY, 'static');
   staticSprite.anims.play('idle', true);
 
+  version = scene.add.image(20, config.height - 30, 'version');
+  version.setScale(0.5);
+  version.setOrigin(0, 0);
+
+  copyright = scene.add.image(config.width - 240, config.height - 30, 'copyright');
+  copyright.setOrigin(0, 0);
+
   menuItems = ["newgame", "continue", "night6", "customnight"];
-  menuItemsPos = [250, 250];
+  menuItemsPos = [175, 370];
+
+  fnaf = scene.add.image(menuItemsPos[0], menuItemsPos[1] - 280, 'fnaf');
+  fnaf.setOrigin(0, 0);
+
   for (let i = 0; i < menuItems.length; i++) {
     const item = menuItems[i];
-    const sprite = scene.add.sprite(menuItemsPos[0], menuItemsPos[1] + (i * 100), item);
+    const sprite = scene.add.sprite(menuItemsPos[0], menuItemsPos[1] + (i * 75), item);
+    sprite.setOrigin(0, 0);
+    sprite.setInteractive();
+    sprite.on('pointerdown', () => {
+      if (item === "newgame") {
+        console.log("New Game clicked");
+        mainMenuActive = false; // deactivate main menu
+        scene.sound.stopByKey('staticbuzz');
+        night = 1; // reset night to 1
+      } else if (item === "continue") {
+        console.log("Continue clicked");
+        // Add logic to continue the game
+      } else if (item === "night6") {
+        console.log("6th Night clicked");
+        // Add logic for 6th night
+      } else if (item === "customnight") {
+        console.log("Custom Night clicked");
+        // Add logic for custom night
+      }
+    });
+    sprite.on('pointerover', () => {
+      blipSound = scene.sound.add('blip');
+      // It needs to play a sound when hovering over menu items, unless hovering over an item that is already selected
+      if (pointerArrows.y != sprite.y + 17) {
+        blipSound.play();
+      }
+      pointerArrows.y = sprite.y + 17;
+    });
   }
+
+  pointerArrows = scene.add.image(menuItemsPos[0] - 40, 1000, 'pointerArrows');
   
   // make animated static flicker by randomizing its alpha every 100ms
   staticSprite.alpha = getRandom(0.5, 0.7, 2);
@@ -203,6 +261,11 @@ function loadMainMenu(scene) { // load menu after content warning
   },});
 
   menuItemsAction();
+}
+
+function saveNight(value) {
+  night = value;
+  localStorage.setItem('night', night);
 }
 
 function getRandom(min, max, decimals = 0) {
