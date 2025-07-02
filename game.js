@@ -28,21 +28,21 @@ let warningSprite;
 
 function preload() { // preload assets presumably to prevent lag when adding them
   // textures
-  this.load.image('warning', 'assets/warning.png');
+  this.load.image('warning', 'assets/textures/warning.png');
 
   this.load.spritesheet('static', 
-    'assets/static/static.png',
+    'assets/textures/static/static.png',
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
 
   this.load.spritesheet('freddyMenu', 
-    'assets/menuFreddyBrighter.png',
+    'assets/textures/menuFreddyBrightened.png',
     { frameWidth: 1280, frameHeight: 720 } // every frame is 720p
   );
 
   // audio
-  this.load.audio('staticbuzz', 'assets/static2.wav');
-  this.load.audio('mainTheme', 'assets/Main Menu Theme.wav');
+  this.load.audio('staticbuzz', 'assets/audio/static2.wav');
+  this.load.audio('mainTheme', 'assets/audio/Main Menu Theme.wav');
 }
 
 function create() {
