@@ -179,7 +179,7 @@ function update(time, delta) {
   // delta = time since last frame in ms
 
   scene = this; // make scene available in functions
-  scanline.y = (time / 30 % (720 + scanline.height) - scanline.height); // move scanline down by 0.5 pixels every frame, wrapping around at the bottom
+  scanline.y = (time / 30 % (config.height + scanline.height) - scanline.height); // move scanline down by 0.5 pixels every frame, wrapping around at the bottom
 
   //console.log(Math.sin(time / 1000) * 1000);
   if (inGame) {
@@ -267,6 +267,7 @@ function loadMainMenu(scene) { // load menu after content warning
         newgame(scene);
       } else if (itemName === "continue") {
         console.log("Continue clicked");
+        continuegame(scene);
         // Add logic to continue the game
       } else if (itemName === "night6") {
         console.log("6th Night clicked");
@@ -329,11 +330,21 @@ function loadMainMenu(scene) { // load menu after content warning
   menuItemsAction();
 }
 
+function continuegame(scene) {
+  console.log("Continue clicked");
+  mainMenuActive = false; // deactivate main menu
+  scene.sound.stopByKey('staticbuzz');
+  scene.loopingSound.stop(); // stop the main menu theme
+  destroyMenu(scene);
+  loadGame(scene);
+}
+
 function newgame(scene) {
   console.log("New Game clicked");
   mainMenuActive = false; // deactivate main menu
   scene.sound.stopByKey('staticbuzz');
   night = 1; // reset night to 1
+  saveNight(night);
   newspaper = scene.add.image(centerX, centerY, 'newspaper');
   newspaper.alpha = 0;
   scene.tweens.add({
@@ -436,6 +447,7 @@ function startGameLogic(scene) {
   inGame = true; // set inGame flag to true
 }
 
+// HELPER FUNCTIONS
 
 function saveNight(value) { // helper function to save the current night to localStorage
   night = value;
