@@ -430,6 +430,11 @@ function loadGame(scene) {
 
 function loadGameAssets(scene) {
   scene.load.image('office', 'assets/textures/office/office.png');
+
+  this.load.spritesheet('fan', 
+    'assets/textures/office/fan.png',
+    { frameWidth: 137, frameHeight: 196 }
+  );
   
   scene.load.once('complete', () => {
     startGameLogic(scene);
@@ -443,6 +448,7 @@ function startGameLogic(scene) {
   
   // Add the office background image
   office = scene.add.image(0, 0, 'office').setOrigin(0);
+  fan = scene.add.sprite(400, 400, 'fan').setOrigin(0);
 
   inGame = true; // set inGame flag to true
 }
