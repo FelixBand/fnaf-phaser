@@ -182,10 +182,10 @@ function update(time, delta) {
   scanline.y = (time / 30 % (config.height + scanline.height) - scanline.height); // move scanline down by 0.5 pixels every frame, wrapping around at the bottom
 
   //console.log(Math.sin(time / 1000) * 1000);
-  if (inGame) {
-    //console.log("In game, moving office background");
-    office.x = Math.sin(time / 1000) * 1000; // make the office background move slightly left and right
-  }
+  // if (inGame) {
+  //   //console.log("In game, moving office background");
+  //   office.x = Math.sin(time / 1000) * 1000; // make the office background move slightly left and right
+  // }
 }
 
 async function menuItemsAction() { // just testing
@@ -326,8 +326,6 @@ function loadMainMenu(scene) { // load menu after content warning
       glitching.alpha = 0;
     }
   },});
-
-  menuItemsAction();
 }
 
 function continuegame(scene) {
@@ -431,7 +429,7 @@ function loadGame(scene) {
 function loadGameAssets(scene) {
   scene.load.image('office', 'assets/textures/office/office.png');
 
-  this.load.spritesheet('fan', 
+  scene.load.spritesheet('fan', 
     'assets/textures/office/fan.png',
     { frameWidth: 137, frameHeight: 196 }
   );
@@ -446,9 +444,17 @@ function loadGameAssets(scene) {
 function startGameLogic(scene) {
   clock.destroy();
   
+  scene.anims.create({ // Create the fan animation after loading the fan spritesheet
+    key: 'spin', // The name (key) of the animation we’ll reference later
+    frames: scene.anims.generateFrameNumbers('fan', { start: 0, end: 2 }), // use frame 0-7
+    frameRate: 60,
+    repeat: -1 // -1 = loop
+  });
+
   // Add the office background image
   office = scene.add.image(0, 0, 'office').setOrigin(0);
-  fan = scene.add.sprite(400, 400, 'fan').setOrigin(0);
+  fan = scene.add.sprite(400, 350, 'fan').setOrigin(0);
+  fan.anims.play('spin', true);
 
   inGame = true; // set inGame flag to true
 }
