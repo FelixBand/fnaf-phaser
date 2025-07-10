@@ -186,6 +186,41 @@ function update(time, delta) {
   //   //console.log("In game, moving office background");
   //   office.x = Math.sin(time / 1000) * 1000; // make the office background move slightly left and right
   // }
+
+  // The office and other game elements can be moved with the mouse.
+  // When the mouse is 200 pixels away from the center, it will move the office background, moving faster the further away it is.
+  // The office should not fly out of bounds because of the clamp.
+  if (inGame) {
+    const mouseX = this.input.mousePointer.x;
+    const offsetX = mouseX - centerX;
+
+    const distance = Math.abs(offsetX);
+
+    // Default values
+    let direction = 0;
+    let speed = 0;
+
+    if (distance > 200) {
+      // Normalize direction: 1 for right, -1 for left
+      direction = offsetX > 0 ? 1 : -1;
+
+      // Base speed per second
+      const maxSpeed = 1000; // pixels per second
+      speed = Math.min((distance - 200) * 1.5, maxSpeed); // 0.5 is sensitivity
+    }
+
+    // Convert speed to per-frame movement using delta (ms)
+    const movement = direction * speed * (delta / 1000);
+
+    // Apply movement
+    office.x -= movement;
+
+    // Clamp to prevent moving out of bounds
+    office.x = Phaser.Math.Clamp(office.x, -office.width + 1280, 0);
+
+    // Fan follows office position no matter what
+    fan.x = office.x + 780;
+  }
 }
 
 async function menuItemsAction() { // just testing
@@ -453,7 +488,7 @@ function startGameLogic(scene) {
 
   // Add the office background image
   office = scene.add.image(0, 0, 'office').setOrigin(0);
-  fan = scene.add.sprite(400, 350, 'fan').setOrigin(0);
+  fan = scene.add.sprite(0, 303, 'fan').setOrigin(0);
   fan.anims.play('spin', true);
 
   inGame = true; // set inGame flag to true
