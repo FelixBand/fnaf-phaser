@@ -481,7 +481,7 @@ function startGameLogic(scene) {
   
   scene.anims.create({ // Create the fan animation after loading the fan spritesheet
     key: 'spin', // The name (key) of the animation we’ll reference later
-    frames: scene.anims.generateFrameNumbers('fan', { start: 0, end: 2 }), // use frame 0-7
+    frames: scene.anims.generateFrameNumbers('fan', { start: 0, end: 2 }),
     frameRate: 60,
     repeat: -1 // -1 = loop
   });
